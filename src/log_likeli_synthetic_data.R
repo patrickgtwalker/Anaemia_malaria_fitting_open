@@ -142,7 +142,7 @@ r_loglike <- function(params, data, misc) {
                                          primi_prev = PG_prev,  #*`changed here`
                                          imm_vect)
   ret = 0
-  likelihood <- process_block(HB_data = country_data_list$country_df,
+  likelihood <- process_block(HB_data = data$country_df,
                               site_FE = 0,
                               y_spline = y_spline,
                               G_non_infect = G_non_infect,
@@ -151,7 +151,7 @@ r_loglike <- function(params, data, misc) {
                               HB_sigma = HB_sigma,
                               cutoff = NULL)
   
-  prev_likelihood<-dbinom(country_data_list$prev_data$positive,country_data_list$prev_data$total,PG_prev,log=T)
+  prev_likelihood<-dbinom(data$prev_data$positive,data$prev_data$total,PG_prev,log=T)
   ret <- ret + likelihood+prev_likelihood
   return(ret)
 }

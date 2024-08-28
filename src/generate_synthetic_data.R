@@ -51,7 +51,8 @@ mal_knots<-c(-0.5,-1.5,-1.25)
 
 y_spline <- cubic_spline(x = seq(gestage_min,gestage_max,l=3), y = y_knots, x_pred = seq(gestage_min,gestage_max,l=((gestage_max-gestage_min)+1)))
 mal_spline <- cubic_spline(x = seq(gestage_min,gestage_max,l=3), y = mal_knots, x_pred = seq(gestage_min,gestage_max,l=((gestage_max-gestage_min)+1)))
-
+simmed_mal_spline<-data.frame(gestage=seq(gestage_min,gestage_max,l=((gestage_max-gestage_min)+1)),
+                              mal_effect=-mal_spline)
 
 # Hill function parameters for immunity vector
 hill_shape <-1
@@ -66,7 +67,8 @@ hill_func <- function(i, shape, scale) {
 imm_vect <- hill_func(0:20, hill_shape, hill_scale)
 imm_effects<-get_weight_impact_df(site_inf_histories$site_inf_history[[1]],Primigravid_prevalence,imm_vect)
 
-
+simmed_mal_immunity=data.frame(gravidity=1:6,
+                               mal_effect=-mal_knots[2]*imm_effects)
 
 # Non-infection effects (G_non_infect) for each gravidity category
 G_non_infect_params <- c(0,0.1, 0.2, 0.3, 0.4, 0.5)
@@ -110,7 +112,7 @@ PG_prev<-synthetic_data_df%>%filter(gravidity==1)%>%
   summarise(positive=sum(malaria),total=n())
 
 ## create a list of the different datasets 
-country_data_list<- list(country_df=synthetic_data_df_censor,
+country_data_list_noncensor<- list(country_df=synthetic_data_df,
                                  prev_data=PG_prev
                                 )
 ### now lets censor the data to mimic studies where women with HB<7 where excluded
