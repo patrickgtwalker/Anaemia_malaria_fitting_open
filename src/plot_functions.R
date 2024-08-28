@@ -1,4 +1,4 @@
-
+library("patchwork")
 mcmc_out_new <- function(mcmc,n_samples) {
   
   max_list <- (mcmc$parameters$samples * mcmc$parameters$chains)
@@ -108,126 +108,105 @@ mcmc_out_new <- function(mcmc,n_samples) {
             HB_mean_df=HB_mean_df,
             mal_immunity_df=mal_immunity_df))
 }
-  
 
-uncensored_fit<-mcmc_out_new(run_noncensored_data,100)
-ggplot(uncensored_fit$HB_mean_df ) +
-  geom_point(data=synthetic_data_df,aes(x=gestage,y=hb_level, color = factor(malaria)),alpha=0.05)+
-  geom_line(aes(x = gestage, y = HB_mean, group = interaction(malaria, draw), color = factor(malaria))) +
-  stat_smooth(data=synthetic_data_df,aes(x=gestage,y=hb_level, color = factor(malaria)), method = "loess", se = FALSE, linetype = "dashed", size = 1)+
+noncensored_fit<-mcmc_out_new(run_noncensored_data,100)
+plot1_noncensored <- ggplot(noncensored_fit$HB_mean_df ) +
+  geom_point(data = synthetic_data_df, aes(x = gestage, y = hb_level, color = factor(malaria)), alpha = 0.05) +
+  geom_line(aes(x = gestage, y = HB_mean, group = interaction(malaria, draw), color = factor(malaria)),alpha=0.01) +
+  stat_smooth(data = synthetic_data_df, aes(x = gestage, y = hb_level, color = factor(malaria)), method = "loess", se = FALSE, linetype = "dotted", size = 2) +
   labs(title = "HB Mean vs. Gestational Age by Gravidity and Malaria Status",
        x = "Gestational Age",
        y = "HB Mean",
        color = "Malaria Status") +
-  facet_wrap(~ gravidity) +  # Facet wrap by gravidity
+  facet_wrap(~ gravidity) +
   theme_minimal()
 
+
+# Second plot: Malaria attributable reduction in HB over gestational age
+plot2_noncensored <- ggplot(noncensored_fit$mal_splines_df) +
+  geom_line(aes(x = gestage, y = mal_effect, group = draw), alpha = 0.1) +
+  geom_line(data = simmed_mal_spline, aes(x = gestage, y = mal_effect), linewidth = 3) +
+  ylab("Malaria attributable reduction in HB (g/dL)") +
+  theme_minimal()
+
+# Third plot: Malaria attributable reduction in HB over gravidity
+plot3_noncensored <- ggplot(noncensored_fit$mal_immunity_df) +
+  geom_line(aes(x = gravidity, y = mal_effect, group = draw), alpha = 0.1) +
+  geom_line(data = simmed_mal_immunity, aes(x = gravidity, y = mal_effect), linewidth = 3) +
+  ylab("Malaria attributable reduction in HB (g/dL)") +
+  theme_minimal()
+
+combined_noncensored_plot <- wrap_elements(plot1_noncensored) + 
+  (wrap_elements(plot2_noncensored) / wrap_elements(plot3_noncensored)) + 
+  plot_layout(widths = c(2, 1))
+
+combined_noncensored_plot
 
 incorrect_censored_fit<-mcmc_out_new(run_censored_data_incorrect,100)
+plot1_incorrect_censored <- ggplot(incorrect_censored_fit$HB_mean_df ) +
+  geom_point(data = synthetic_data_df_censor, aes(x = gestage, y = hb_level, color = factor(malaria)), alpha = 0.05) +
+  geom_line(aes(x = gestage, y = HB_mean, group = interaction(malaria, draw), color = factor(malaria)),alpha=0.01) +
+  stat_smooth(data = synthetic_data_df, aes(x = gestage, y = hb_level, color = factor(malaria)), method = "loess", se = FALSE, linetype = "dotted", size = 2) +
+  labs(title = "HB Mean vs. Gestational Age by Gravidity and Malaria Status",
+       x = "Gestational Age",
+       y = "HB Mean",
+       color = "Malaria Status") +
+  facet_wrap(~ gravidity) +
+  theme_minimal()
+
+
+# Second plot: Malaria attributable reduction in HB over gestational age
+plot2_incorrect_censored <- ggplot(incorrect_censored_fit$mal_splines_df) +
+  geom_line(aes(x = gestage, y = mal_effect, group = draw), alpha = 0.1) +
+  geom_line(data = simmed_mal_spline, aes(x = gestage, y = mal_effect), linewidth = 3) +
+  ylab("Malaria attributable reduction in HB (g/dL)") +
+  theme_minimal()
+
+# Third plot: Malaria attributable reduction in HB over gravidity
+plot3_incorrect_censored <- ggplot(incorrect_censored_fit$mal_immunity_df) +
+  geom_line(aes(x = gravidity, y = mal_effect, group = draw), alpha = 0.1) +
+  geom_line(data = simmed_mal_immunity, aes(x = gravidity, y = mal_effect), linewidth = 3) +
+  ylab("Malaria attributable reduction in HB (g/dL)") +
+  theme_minimal()
+
+combined_incorrect_censored_plot <- wrap_elements(plot1_incorrect_censored ) + 
+  (wrap_elements(plot2_incorrect_censored ) / wrap_elements(plot3_incorrect_censored )) + 
+  plot_layout(widths = c(2, 1))
+
+combined_incorrect_censored_plot
+
+
 correct_censored_fit<-mcmc_out_new(run_censored_data_correct,100)
-
-ggplot(correct_fit$mal_splines_df) +
-  geom_line(aes(x = gestage, y = mal_effect, group = draw),alpha=0.1)+
-  geom_line(data=simmed_mal_spline,aes(x = gestage, y = mal_effect),linewidth=3)
-  
-ggplot(correct_fit$mal_immunity_df) +
-  geom_line(aes(x = gravidity, y = mal_effect, group = draw),alpha=0.1)+
-  geom_line(data=simmed_mal_immunity,aes(x = gravidity, y = mal_effect),linewidth=3)
-
-ggplot(incorrect_fit$mal_immunity_df) +
-  geom_line(aes(x = gravidity, y = mal_effect, group = draw),alpha=0.1)+
-  geom_line(data=simmed_mal_immunity,aes(x = gravidity, y = mal_effect),linewidth=3)+ylab("malari")
-
-ggplot(incorrect_fit$mal_splines_df) +
-  geom_line(aes(x = gestage, y = mal_effect, group = draw),alpha=0.1)+
-  geom_line(data=simmed_mal_spline,aes(x = gestage, y = mal_effect),linewidth=3)
-
-
-ggplot(incorrect_fit$HB_mean_df ) +
-  geom_point(data=synthetic_data_df,aes(x=gestage,y=hb_level, color = factor(malaria)),alpha=0.05)+
-    geom_line(aes(x = gestage, y = HB_mean, group = interaction(malaria, draw), color = factor(malaria))) +
-  stat_smooth(data=synthetic_data_df,aes(x=gestage,y=hb_level, color = factor(malaria)), method = "loess", se = FALSE, linetype = "dashed", size = 1)+
+plot1_correct_censored <- ggplot(correct_censored_fit$HB_mean_df ) +
+  geom_point(data = synthetic_data_df_censor, aes(x = gestage, y = hb_level, color = factor(malaria)), alpha = 0.05) +
+  geom_line(aes(x = gestage, y = HB_mean, group = interaction(malaria, draw), color = factor(malaria)),alpha=0.01) +
+  stat_smooth(data = synthetic_data_df, aes(x = gestage, y = hb_level, color = factor(malaria)), method = "loess", se = FALSE, linetype = "dotted", size = 2) +
   labs(title = "HB Mean vs. Gestational Age by Gravidity and Malaria Status",
        x = "Gestational Age",
        y = "HB Mean",
        color = "Malaria Status") +
-
-  facet_wrap(~ gravidity) +  # Facet wrap by gravidity
+  facet_wrap(~ gravidity) +
   theme_minimal()
 
 
+# Second plot: Malaria attributable reduction in HB over gestational age
+plot2_correct_censored <- ggplot(correct_censored_fit$mal_splines_df) +
+  geom_line(aes(x = gestage, y = mal_effect, group = draw), alpha = 0.1) +
+  geom_line(data = simmed_mal_spline, aes(x = gestage, y = mal_effect), linewidth = 3) +
+  ylab("Malaria attributable reduction in HB (g/dL)") +
+  theme_minimal()
 
-ggplot(correct_fit$HB_mean_df ) +
-  geom_point(data=synthetic_data_df,aes(x=gestage,y=hb_level, color = factor(malaria)),alpha=0.05)+
-  geom_line(aes(x = gestage, y = HB_mean, group = interaction(malaria, draw), color = factor(malaria))) +
-  stat_smooth(data=synthetic_data_df,aes(x=gestage,y=hb_level, color = factor(malaria)), method = "loess", se = FALSE, linetype = "dashed", size = 1)+
-  labs(title = "HB Mean vs. Gestational Age by Gravidity and Malaria Status",
-       x = "Gestational Age",
-       y = "HB Mean",
-       color = "Malaria Status") +
-  
-  facet_wrap(~ gravidity) +  # Facet wrap by gravidity
+# Third plot: Malaria attributable reduction in HB over gravidity
+plot3_correct_censored <- ggplot(correct_censored_fit$mal_immunity_df) +
+  geom_line(aes(x = gravidity, y = mal_effect, group = draw), alpha = 0.1) +
+  geom_line(data = simmed_mal_immunity, aes(x = gravidity, y = mal_effect), linewidth = 3) +
+  ylab("Malaria attributable reduction in HB (g/dL)") +
   theme_minimal()
 
 
-length(check$GA_splines_out[,1])
+combined_correct_censored_plot <- wrap_elements(plot1_correct_censored ) + 
+  (wrap_elements(plot2_correct_censored ) / wrap_elements(plot3_correct_censored )) + 
+  plot_layout(widths = c(2, 1))
 
-quick_run$output%>%
-  filter(phase=="sampling") %>%
-  select(sprintf("mal_knot_%s", 1:3)) %>%
-  apply(MARGIN = 1, FUN = function(y) cubic_spline(x = seq(gestage_min,gestage_max,l=3), y=y, 
-                                                   x_pred = seq(gestage_min,gestage_max,l=((gestage_max-gestage_min)+1))))%>%
-  as.data.frame() %>%
-  mutate(x = seq(gestage_min,gestage_max,l=((gestage_max-gestage_min)+1)))
+combined_correct_censored_plot
 
-
-mcmc_out_new(quick_run$output)
- 
-  GA_splines_out<- mcmc %>%
-    filter(phase == "sampling") %>%
-    select(sprintf("y_knot_%s", 1:3)) %>%
-    apply(MARGIN = 1, FUN = function(y) cubic_spline(x = seq(min,max,l=3), y=y, 
-                                                     x_pred = seq(min,max,l=(2*(max-min)+1)))) %>%
-    as.data.frame() %>%
-    mutate(x =  seq(min,max,l=(2*(max-min)+1)))
-
- 
-  HB_sigma_out <- mcmc %>%
-    filter(phase == "sampling") %>%
-    select(sprintf("HB_sigma")) %>%
-    as.data.frame()
-  
-  
-  for (i in 2:6) {
-    assign(paste0("G", i, "_non_infect_out"), 
-           mcmc %>%
-             filter(phase == "sampling") %>%
-             select(sprintf("G%s_non_infect", i)) %>%
-             as.data.frame())
-  }
-  
-  scale_hill_out <- mcmc %>%
-    filter(phase == "sampling") %>%
-    select(sprintf("scale_hill")) %>%
-    as.data.frame()
-  
-  shape_hill_out <- mcmc %>%
-    filter(phase == "sampling") %>%
-    select(sprintf("shape_hill")) %>%
-    as.data.frame()
-  
-  
-  return(list(GA_splines_out = GA_splines_out, mal_splines_out = mal_splines_out,
-              site_out_1 = site_out_1, site_out_2 = site_out_2, site_out_3 = site_out_3,
-              site_out_4 = site_out_4, site_out_5 = site_out_5, site_out_6 = site_out_6,
-              site_out_7 = site_out_7, site_out_8 = site_out_8, 
-              log_odds_PG_prev_1_out = log_odds_PG_prev_1_out, log_odds_PG_prev_2_out = log_odds_PG_prev_2_out,
-              log_odds_PG_prev_3_out = log_odds_PG_prev_3_out, log_odds_PG_prev_4_out = log_odds_PG_prev_4_out,
-              log_odds_PG_prev_5_out = log_odds_PG_prev_5_out, log_odds_PG_prev_6_out = log_odds_PG_prev_6_out,
-              log_odds_PG_prev_7_out = log_odds_PG_prev_7_out, log_odds_malaria_prevalence_G1_wkenya_out = log_odds_malaria_prevalence_G1_wkenya_out,
-              log_odds_malaria_prevalence_G1_malawi_out = log_odds_malaria_prevalence_G1_malawi_out, HB_sigma_out = HB_sigma_out, 
-              G2_non_infect_out = G2_non_infect_out, G3_non_infect_out = G3_non_infect_out,
-              G4_non_infect_out = G4_non_infect_out, G5_non_infect_out = G5_non_infect_out,
-              G6_non_infect_out = G6_non_infect_out,
-              scale_hill_out = scale_hill_out, shape_hill_out = shape_hill_out))
-} #

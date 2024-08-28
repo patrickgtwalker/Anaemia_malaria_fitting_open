@@ -1,7 +1,3 @@
-source("./src/cubic_spline.R")
-source("./src/immune_functions.R")
-source("./src/load_inf_histories.R")
-
 # Function to compute distribution of gravidity categories based on relative risks
 get_dist_grav <- function(RRs) {
   numerator <- c(1, RRs)
