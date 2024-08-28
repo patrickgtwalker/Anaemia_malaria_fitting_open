@@ -23,8 +23,8 @@ quick_run<-run_mcmc(data = country_data_list_censor,
                              ),
          loglike = r_loglike_w_censoring,
          logprior = r_logprior, # currently has no prior
-         burnin = 1000,
-         samples = 1000, 
+         burnin = 5000,
+         samples = 10000, 
          pb_markdown = FALSE,
          chains = 1
 )

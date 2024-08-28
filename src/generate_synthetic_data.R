@@ -17,7 +17,7 @@ gestage_min <- 80  # Minimum gestational age
 gestage_max <- 200 # Maximum gestational age
 
 # Number of pregnant women
-base_sample_size <- 10000  # Total sample size across all gravidity categories
+base_sample_size <- 30000  # Total sample size across all gravidity categories
 
 # Number of gravidity categories
 grav_cats <- 6
@@ -105,31 +105,37 @@ for (i in 1:grav_cats) {
 
 # Combine all gravidity categories into one data frame
 synthetic_data_df <- do.call(rbind, synthetic_data)
+# precalculate data on overall risk in primigravidae for computational efficiency
 PG_prev<-synthetic_data_df%>%filter(gravidity==1)%>%
   summarise(positive=sum(malaria),total=n())
 
-
-
-## censor data 
+## create a list of the different datasets 
+country_data_list<- list(country_df=synthetic_data_df_censor,
+                                 prev_data=PG_prev
+                                )
+### now lets censor the data to mimic studies where women with HB<7 where excluded
 cutoff<-7
 synthetic_data_df_censor<-synthetic_data_df%>%filter(hb_level>cutoff)
+
+## provide data on # of women censored
 censored_number<-as.numeric(synthetic_data_df%>%filter(hb_level<=cutoff)%>%summarise(n()))
 uncensored_number<-nrow(synthetic_data_df_censor)
-
 censored_data<-list(censored_number=censored_number,
                     total_number=censored_number+uncensored_number)
 
+## pre-calculate the observed GA distribution in uncensored women for computational efficiency
 uncensored_dist<-synthetic_data_df_censor%>%
   group_by(adj_gestage,malaria,gravidity,.drop=F)%>%
   summarise(count=n())
-uncensored_dist
+
+### index based on gravidity and malaria status to align with function in prob_censor.R for computational efficiency
 uncensored_dist$index<-with(uncensored_dist, (adj_gestage - 1) * (max(uncensored_dist$malaria) + 1) * max(uncensored_dist$gravidity) + malaria * max(uncensored_dist$gravidity) + gravidity)
 
-
-
+## observed distribution by gravidity and malaria status 
 grav_mal_counts = synthetic_data_df_censor %>% dplyr::group_by(gravidity, malaria)%>%
   summarise(total=n(), prop=n()/uncensored_number)
 
+## create a list of the different datasets 
 country_data_list_censor <- list(country_df=synthetic_data_df_censor,
                           prev_data=PG_prev,
                           grav_mal_counts=grav_mal_counts,
@@ -137,3 +143,7 @@ country_data_list_censor <- list(country_df=synthetic_data_df_censor,
                           censored_data=censored_data
                           )
 
+## create a list of the different datasets for fitting without accounting for effect of censoring.
+country_data_list_wrong <- list(country_df=synthetic_data_df_censor,
+                                 prev_data=PG_prev
+                                 )
