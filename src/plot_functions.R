@@ -1,7 +1,3 @@
-n_samples <- 100 # how many samples do I want
-max_list <- 2*(mcmc_G1_G2_G3_G4_G5_G6_1e41e5_model_1$parameters$samples * mcmc_G1_G2_G3_G4_G5_G6_1e41e5_model_1$parameters$chains)
-n_list <- sample(1:max_list, n_samples, replace=F) #if only sample for n_list once, it stays the same.
-
 
 mcmc_out_new <- function(mcmc,n_samples) {
   
@@ -37,6 +33,11 @@ mcmc_out_new <- function(mcmc,n_samples) {
     filter(phase == "sampling") %>%
     select(sprintf("log_odds_malaria_prevalence_G1")) %>%
     as.data.frame()
+  
+  mal_knot2 <- output %>%
+    filter(phase == "sampling") %>%
+    select(sprintf("mal_knot_2")) %>%
+    as.data.frame()
  
    scale_hill_out <- output %>%
     filter(phase == "sampling") %>%
@@ -52,7 +53,8 @@ mcmc_out_new <- function(mcmc,n_samples) {
   
   # Initialize an empty list to store data frames for each draw, gravidity, and malaria status
   HB_mean_list <- list()
-  
+  mal_splines_list <- list()
+  mal_immunity_list <- list()
   # Loop over the draws in n_list
   for(j in n_list){
     # Generate the immunity vector
@@ -62,10 +64,16 @@ mcmc_out_new <- function(mcmc,n_samples) {
     grav_impact_df <- get_weight_impact_df(inf_history = burkina_inf_history,
                                            primi_prev = plogis(log_odds_malaria_prevalence_G1_out$log_odds_malaria_prevalence_G1[j]),
                                            imm_vect = imm_vect)
-    
+    mal_splines_df<-data.frame(mal_effect =-mal_splines_out[,j],
+               gestage = seq(gestage_min, gestage_max, l = ((gestage_max - gestage_min) + 1)),
+               draw = j)
     # Loop over gravidities (assuming 1 to 6 for gravidity categories)
     for(g in 1:6){
       # Calculate HB_mean with malaria for each gravidity
+      mal_immunity<-data.frame(mal_effect =-mal_knot2$mal_knot_2[j] * grav_impact_df[g],
+                               draw = j,  # Store the draw index
+                               gravidity = g
+                               )
       HB_mean_mal <- data.frame(HB_mean = GA_splines_out[,j] + mal_splines_out[,j] * grav_impact_df[g] + G_non_infect_array[j, g],
                                 gestage = seq(gestage_min, gestage_max, l = ((gestage_max - gestage_min) + 1)),
                                 draw = j,  # Store the draw index
@@ -80,6 +88,8 @@ mcmc_out_new <- function(mcmc,n_samples) {
                                    malaria = 0)  # Indicate no malaria status
       
       # Append the data frames to the list
+      mal_immunity_list[[length(mal_immunity_list) + 1]] <- mal_immunity
+      mal_splines_list[[length(mal_splines_list) + 1]] <- mal_splines_df
       HB_mean_list[[length(HB_mean_list) + 1]] <- HB_mean_mal
       HB_mean_list[[length(HB_mean_list) + 1]] <- HB_mean_no_mal
     }
@@ -87,55 +97,78 @@ mcmc_out_new <- function(mcmc,n_samples) {
   
   # Combine all the data frames into one using bind_rows
   HB_mean_df <- bind_rows(HB_mean_list)
-  
-  
+  mal_splines_df<-bind_rows(mal_splines_list)
+  mal_immunity_df<-bind_rows(mal_immunity_list)
   # Rename the value column (assuming the column for HB_mean_mal is V1)
   colnames(HB_mean_df)[1] <- "HB_mean"
+  colnames(mal_splines_df)[1]<-"mal_effect"
+  colnames(mal_immunity_df)[1]<-"mal_effect"
   
-
-  
-
-  #  HB_mean_no_mal_G1 <- (rep(site_out_x[j,], rep_number) + mcmc_output$GA_splines_out[,j]) 
- # HB_mean_mal_G1 <- as.data.frame(HB_mean_mal_G1) %>% mutate(x=seq(min,max,l=(2*(max-min)+1))) 
-  #HB_mean_no_mal_G1 <- as.data.frame(HB_mean_no_mal_G1) %>% mutate(x=seq(min,max,l=(2*(max-min)+1)))
-  #HB_mean_mal_G1 <- cbind(HB_mean_mal_G1, rep(j, rep_number), rep(1, rep_number), rep(country_name, rep_number), rep(1, rep_number))
-  #HB_mean_no_mal_G1 <- cbind(HB_mean_no_mal_G1, rep(j, rep_number), rep(1, rep_number), rep(country_name, rep_number), rep(0, rep_number))
-  #malaria_output_G1 = rbind(malaria_output_G1, HB_mean_mal_G1)
-  #no_malaria_output_G1 = rbind(no_malaria_output_G1, HB_mean_no_mal_G1)
-  
-  
-  return(list(mal_splines_out=mal_splines_out,
-              GA_splines_out=GA_splines_out,
-              HB_mean_df=HB_mean_df))
+  return(list(mal_splines_df=mal_splines_df,
+            HB_mean_df=HB_mean_df,
+            mal_immunity_df=mal_immunity_df))
 }
   
 
-check<-mcmc_out_new(run_censored_data_incorrect,100)
+uncensored_fit<-mcmc_out_new(run_noncensored_data,100)
+ggplot(uncensored_fit$HB_mean_df ) +
+  geom_point(data=synthetic_data_df,aes(x=gestage,y=hb_level, color = factor(malaria)),alpha=0.05)+
+  geom_line(aes(x = gestage, y = HB_mean, group = interaction(malaria, draw), color = factor(malaria))) +
+  stat_smooth(data=synthetic_data_df,aes(x=gestage,y=hb_level, color = factor(malaria)), method = "loess", se = FALSE, linetype = "dashed", size = 1)+
+  labs(title = "HB Mean vs. Gestational Age by Gravidity and Malaria Status",
+       x = "Gestational Age",
+       y = "HB Mean",
+       color = "Malaria Status") +
+  facet_wrap(~ gravidity) +  # Facet wrap by gravidity
+  theme_minimal()
 
-ggplot(check$HB_mean_df ) +
-  geom_point(data=synthetic_data_df,aes(x=gestage,y=hb_level, color = factor(malaria)),alpha=0.1)+
+
+incorrect_censored_fit<-mcmc_out_new(run_censored_data_incorrect,100)
+correct_censored_fit<-mcmc_out_new(run_censored_data_correct,100)
+
+ggplot(correct_fit$mal_splines_df) +
+  geom_line(aes(x = gestage, y = mal_effect, group = draw),alpha=0.1)+
+  geom_line(data=simmed_mal_spline,aes(x = gestage, y = mal_effect),linewidth=3)
+  
+ggplot(correct_fit$mal_immunity_df) +
+  geom_line(aes(x = gravidity, y = mal_effect, group = draw),alpha=0.1)+
+  geom_line(data=simmed_mal_immunity,aes(x = gravidity, y = mal_effect),linewidth=3)
+
+ggplot(incorrect_fit$mal_immunity_df) +
+  geom_line(aes(x = gravidity, y = mal_effect, group = draw),alpha=0.1)+
+  geom_line(data=simmed_mal_immunity,aes(x = gravidity, y = mal_effect),linewidth=3)+ylab("malari")
+
+ggplot(incorrect_fit$mal_splines_df) +
+  geom_line(aes(x = gestage, y = mal_effect, group = draw),alpha=0.1)+
+  geom_line(data=simmed_mal_spline,aes(x = gestage, y = mal_effect),linewidth=3)
+
+
+ggplot(incorrect_fit$HB_mean_df ) +
+  geom_point(data=synthetic_data_df,aes(x=gestage,y=hb_level, color = factor(malaria)),alpha=0.05)+
     geom_line(aes(x = gestage, y = HB_mean, group = interaction(malaria, draw), color = factor(malaria))) +
-  stat_smooth(aes(x = gestage, y = HB_mean, color = factor(malaria)), method = "loess", se = FALSE, linetype = "dashed", size = 1)+
+  stat_smooth(data=synthetic_data_df,aes(x=gestage,y=hb_level, color = factor(malaria)), method = "loess", se = FALSE, linetype = "dashed", size = 1)+
   labs(title = "HB Mean vs. Gestational Age by Gravidity and Malaria Status",
        x = "Gestational Age",
        y = "HB Mean",
        color = "Malaria Status") +
 
-  facet_wrap(~ gravidity, scales = "free_y") +  # Facet wrap by gravidity
+  facet_wrap(~ gravidity) +  # Facet wrap by gravidity
   theme_minimal()
 
 
-check$HB_mean_mal_G1_combined
-ggplot(check$HB_mean_df) +
-  geom_line(aes(x = gestage, y = HB_mean, group = draw)) +
-  labs(title = "HB Mean Malaria Effect across Gestational Age",
-       x = "Gestational Age",
-       y = "HB Mean") +
-  theme_minimal()+ylim(0,20)+
-  stat_smooth(aes(x = gestage, y = HB_mean), method = "loess", se = FALSE, linetype = "dashed", size = 1)+
-  geom_point(data=synthetic_data_df%>%filter(gravidity==1,malaria==1),aes(x=gestage,y=hb_level))
 
-head(synthetic_data_df)
+ggplot(correct_fit$HB_mean_df ) +
+  geom_point(data=synthetic_data_df,aes(x=gestage,y=hb_level, color = factor(malaria)),alpha=0.05)+
+  geom_line(aes(x = gestage, y = HB_mean, group = interaction(malaria, draw), color = factor(malaria))) +
+  stat_smooth(data=synthetic_data_df,aes(x=gestage,y=hb_level, color = factor(malaria)), method = "loess", se = FALSE, linetype = "dashed", size = 1)+
+  labs(title = "HB Mean vs. Gestational Age by Gravidity and Malaria Status",
+       x = "Gestational Age",
+       y = "HB Mean",
+       color = "Malaria Status") +
+  
+  facet_wrap(~ gravidity) +  # Facet wrap by gravidity
+  theme_minimal()
+
 
 length(check$GA_splines_out[,1])
 
