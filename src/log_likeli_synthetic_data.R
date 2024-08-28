@@ -88,6 +88,7 @@ r_loglike_w_censoring <- function(params, data, misc) {
   grav_impact_df <- get_weight_impact_df(inf_history = misc$list_inf_histories[[country]], #*`changed here`
                                          primi_prev = malaria_prevalence[1],  #*`changed here`
                                          imm_vect)
+
   ret = 0
   likelihood <- process_block(HB_data = data$country_df,
                               site_FE = 0,

@@ -14,8 +14,8 @@ source("./src/log_prior.R")
 list_inf_histories = list(
   site_inf_histories$site_inf_history[[1]]
 )
-quick_run<-run_mcmc(data = country_data_list,
-                 df_params = df_params,
+quick_run<-run_mcmc(data = country_data_list_censor,
+                 df_params = df_params_censor,
                  misc = list(gestage_min = 80,
                              gestage_max=200,
                              cutoff = 7,

@@ -17,13 +17,13 @@ gestage_min <- 80  # Minimum gestational age
 gestage_max <- 200 # Maximum gestational age
 
 # Number of pregnant women
-base_sample_size <- 3000  # Total sample size across all gravidity categories
+base_sample_size <- 10000  # Total sample size across all gravidity categories
 
 # Number of gravidity categories
 grav_cats <- 6
 
-GA_shape_1<-3
-GA_shape_2<-2
+GA_shape_1<-1
+GA_shape_2<-1
 # Log relative risks (log_RR) - decreasing sample size for categories 1-5, slight increase for category 6
 log_RR <- c(-0.1, -0.2, -0.3, -0.4, 0.2)
 
