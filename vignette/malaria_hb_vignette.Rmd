@@ -38,9 +38,9 @@ synthetic_data_df <- generate_synthetic_data(site_inf_history = selected_inf_his
 ```
 This vignette applies the models developed in [Reference to Paper] to simulated data. We begin by validating our inferential framework for modelling the impact of malaria on haemoglobin levels during pregnancy, including the effect of acquired immunity over successive pregnancies. We then demonstrate the biases introduced by excluding women diagnosed with severe anaemia at enrolment and validate our approach for adjusting the framework to account for these biases, enabling us to correctly capture underlying trends.
 
-## Inferring Patterns from Uncensored Data 
+# Inferring Patterns from Uncensored Data 
 
-# Preparing Our Data 
+## Preparing Our Data 
 Our study involved data on the HB concentrations at enrollment into a trial, infection status by PCR, gestational age at enrollment and gravidity. We also use ANC prevalence in primigravidae as a marker to determine our model-based estimates of patterns of prior exposure during pregnancy. The function generate_country_data_list_censor creates a list that involves both the data (here the synthetic data from data_generation.Rmd) and pre-calculated aggregated number of PCR samples and PCR positives in primigravidae within the dataset (to reduce computational time)
 
 ```{r generate synthetic data}
@@ -53,7 +53,7 @@ knitr::kable(head(uncensored_data_list$country_df))
 knitr::kable((uncensored_data_list$prev_data))
 ```
 
-# defining parameters
+## Defining Parameters
 Defining Parameters
 Our approach uses the drjacoby package which requires specific templates for parameters. Here we use the function 'generate_df_params_non_censor' to set up a template of parameters required for this package. These parameters include:
 
@@ -69,7 +69,7 @@ df_params_non_censor <- generate_df_params_non_censor()
 knitr::kable(df_params_non_censor)
 
 ```
-Running the Model on Uncensored Data
+## Running the Model on Uncensored Data
 With the data prepared and parameters defined, we now run our model on the uncensored dataset. This will help us validate our model's ability to capture the true underlying patterns without any biases introduced by data censorship.
 
 
@@ -86,8 +86,8 @@ run_noncensored_data <- run_mcmc(
   ),
   loglike = r_loglike,
   logprior = r_logprior_noncensor,
-  burnin = 100,
-  samples = 1000,
+  burnin = 1000,
+  samples = 5000,
   pb_markdown = FALSE,
   chains = 1
 )
@@ -97,7 +97,7 @@ run_noncensored_data <- run_mcmc(
 ```{r read model , echo = FALSE, eval = FALSE}
 run_noncensored_data<-readRDS(here::here("inst", "extdata", "run_noncensored_data.rds"))
 ```
-#Visualising the Results from Uncensored Data
+## Visualising the Results 
 After running the model, we can visualise the results to compare the model's predictions with the true synthetic data. This helps us ensure that the model correctly infers the impact of malaria on haemoglobin levels.
 ```{r generate plot noncensor model}
 # Generate combined plot for non-censored data
@@ -108,14 +108,14 @@ combined_noncensored_plot <- generate_combined_plot(
   site_inf_history = selected_inf_history
 )
 
-
 ```
+In the left-hand plot dots show datapoints, the dashed lines show true underlying mean Hb by gestation and gravidity and thin equivalent lines show draws from the joint posterior for these means. On the right-hand plots thick orange lines show the simulated values and thin purple lines equivalent posterior draws.     
 
 ```{r  plot noncensor model,fig.width=10,fig.height=8}
 # Display the combined plot
 combined_noncensored_plot
 ```
-##Introducing Bias: Inferring Patterns from Censored Data
+# Introducing Bias: Inferring Patterns from Censored Data
 
 In some of the studies used in the analysis, women with severe anaemia (HB < 7) are excluded from enrolment, introducing biases. Here, we simulate this scenario by censoring our synthetic data and then running the model without adjusting for this bias.
 ```{r  censor data}
@@ -141,8 +141,8 @@ run_censored_data_incorrect <- run_mcmc(
   ),
   loglike = r_loglike,
   logprior = r_logprior_noncensor,
-  burnin = 100,
-  samples = 1000,
+  burnin = 1000,
+  samples = 10000,
   pb_markdown = FALSE,
   chains = 1
 )

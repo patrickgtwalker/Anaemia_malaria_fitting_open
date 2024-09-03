@@ -31,11 +31,11 @@ generate_df_params_non_censor <- function(
 
 generate_df_params_censor <- function(
     grav_cats = 6, 
-    HB_sigma_range = c(0.1, 10),
+    HB_sigma_range = c(0.2, 10),
     hill_shape_range = c(0.01, 10),
     hill_scale_range = c(0.01, 10),
     y_knot_range = c(5, 15),
-    mal_knot_range = c(-10, 10),
+    mal_knot_range = c(-5, 5),
     prev_range = c(-4.595, 1.736),
     RR_range = c(-5, 5),
     GA_shape_range = c(0.01, 10),

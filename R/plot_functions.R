@@ -145,8 +145,8 @@ fit_summary <- summarise_model(mcmc=model,site_inf_history=site_inf_history, n_s
 # First plot: HB Mean vs. Gestational Age by Gravidity and Malaria Status
 plot1_noncensored <- ggplot(fit_summary$HB_mean_df) +
   geom_point(data = fitted_data, aes(x = gestage, y = hb_level, color = factor(malaria)), alpha = 0.05) +
-  geom_line(aes(x = gestage, y = HB_mean, group = interaction(malaria, draw), color = factor(malaria)), alpha = 0.01) +
-  stat_smooth(data = true_data$data_df, aes(x = gestage, y = hb_level, color = factor(malaria)), method = "loess", se = FALSE, linetype = "dotted", size = 2) +
+  geom_line(aes(x = gestage, y = HB_mean, group = interaction(malaria, draw), color = factor(malaria)), alpha = 0.1) +
+  stat_smooth(data = true_data$data_df, aes(x = gestage, y = hb_level, color = factor(malaria)), method = "loess", se = FALSE, linetype = "dotted", linewidth = 2) +
   labs(title = "HB Mean vs. Gestational Age by Gravidity and Malaria Status",
        x = "Gestational Age",
        y = "HB Mean",
@@ -157,14 +157,14 @@ plot1_noncensored <- ggplot(fit_summary$HB_mean_df) +
 # Second plot: Malaria attributable reduction in HB over gestational age
 plot2_noncensored <- ggplot(fit_summary$mal_splines_df) +
   geom_line(aes(x = gestage, y = mal_effect, group = draw), alpha = 0.05,color = "#6B5072") +
-  geom_line(data = true_data$simmed_mal_spline, aes(x = gestage, y = mal_effect), size = 3,color = "#6B5072") +
+  geom_line(data = true_data$simmed_mal_spline, aes(x = gestage, y = mal_effect), linewidth = 3,color = "#D08C60") +
   ylab("Malaria attributable reduction in HB (g/dL)") +
   theme_minimal()
 
 # Third plot: Malaria attributable reduction in HB over gravidity
 plot3_noncensored <- ggplot(fit_summary$mal_immunity_df) +
-  geom_line(aes    (x = gravidity, y = mal_effect, group = draw), alpha = 0.05,color = "#D08C60") +
-  geom_line(data = true_data$simmed_mal_immunity, aes(x = gravidity, y = mal_effect), size = 3,color = "#D08C60") +
+  geom_line(aes    (x = gravidity, y = mal_effect, group = draw), alpha = 0.05,color = "#6B5072") +
+  geom_line(data = true_data$simmed_mal_immunity, aes(x = gravidity, y = mal_effect), linewidth = 3,color = "#D08C60") +
   ylab("Malaria attributable reduction in HB (g/dL)") +
   theme_minimal()
 
