@@ -1,3 +1,9 @@
+# Load infection histories for the site
+site_inf_histories <- readRDS("./site_inf_histories.RDS")
+list_inf_histories <- list(
+  site_inf_histories$site_inf_history[[1]]
+)
+
 get_dist_grav <- function(RRs) {
   # Calculate the distribution of gravidity categories based on relative risks (RRs)
   numerator <- c(1, RRs)  # Add baseline category (G1) with RR = 1

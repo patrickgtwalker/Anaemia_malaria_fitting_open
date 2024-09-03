@@ -1,0 +1,140 @@
+---
+title: "Model structure and generating synthetic data"
+author: "Patrick Walker and Sequoia Leuba"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+# Load necessary libraries and functions using `here`
+library(here)
+grav_cats<-6
+source(here("R", "load_libraries.R"))
+source(here("R", "cubic_spline.R"))
+source(here("R", "immune_functions.R"))
+source(here("R", "prob_censor.R"))
+source(here("R", "data_generation_functions.R"))
+source(here("R", "define_params_functions.R"))
+source(here("R", "log_likeli.R"))
+source(here("R", "log_prior.R"))
+source(here("R", "plot_functions.R"))
+```
+In this vignette we highlight key aspects of our underlying model and how to generate datasets with which to test our inferential framework
+
+## Importing pre-calculated values
+Our analysis uses an existing model to capture likely patterns of prior exposure by gravidity based upon patterns of fertility and Primigravid prevalence at first ANC
+
+```{r read_inf_history, echo = TRUE}
+list_inf_histories<-readRDS(here::here("inst", "extdata", "site_inf_histories.rds"))
+knitr::kable(head(list_inf_histories$details))
+```
+Here we can see the closest available DHS survey year and admin1 unit the underlying fertility patterns are based upon. Selecting the first (representing the fertility patterns at the time of the trial of ISTp in Burkina Faso) we can look at it's structure. 
+
+```{r show_inf_history_structure, echo = TRUE}
+selected_inf_history<-list_inf_histories$site_inf_history[[1]]
+names(selected_inf_history)
+knitr::kable(head(selected_inf_history$sim_details))
+knitr::kable(head(selected_inf_history$inf_mat_g2))
+```
+
+We can see that each fertility patterns contains a list of six dataframes summarising 1000 simulations of the model. 'sim_details' shows the EIRs used for each simulations the model ranging from $10^-0.5$ and $10^4$ sampled uniformally on the log-scale and primi_ANC_prev the resultant prevalence at first ANC in primgravid women. inf_mat_gX is then the distribution of levels of previous exposure in a previous pregnancy.
+
+So if we want to see what the distribution of exposures of women infected during their second or third pregnancy in a setting with 10% prevalence by PCR at first ANC we use 'sim_details' as our look-up table and use that to access the correct row of 'inf_mat_g2' and 'inf_mat_g3'respectively
+
+```{r show how to access correct element, echo = TRUE}
+primi_prev<-0.1
+ index <- which.min(abs(selected_inf_history$sim_details$primi_ANC_prev - primi_prev))
+  selected_inf_history$inf_mat_g2[index,]
+  selected_inf_history$inf_mat_g3[index,]
+```
+
+So for infected secundigravidae we'd expect around 25% to have been exposed to malaria in their first pregnancy. 
+At first glance this may seem unintuitively high given prevalence was 10% at first ANC in their previous pregnancy. In part this is because the model capture cumulative prevalence from 12 weeks gestation (when the placenta is considered sufficiently viable to lead to substantial sequestration) to delivery but is largely due to heterongeneity in exposure within the community - women who are infected this pregnancy are more likely than average to be infected this one. 
+
+To model how prior exposure mitigates the malaria-associated impact on hemoglobin, we use the Hill function, which is commonly used in biological contexts to describe saturation effects.
+```{r hill_func, echo = TRUE,fig.width=5}
+
+# Example usage of the Hill function
+shape <- 2
+scale <- 1
+immunity_vector <- hill_func(0:20, shape, scale)
+
+
+
+# Plot the Hill function
+library(ggplot2)
+ggplot(data.frame(i = 0:20, immunity = immunity_vector), aes(x = i, y = immunity)) +
+  geom_line() +
+  labs(title = "Immunity Vector Modeled by Hill Function",
+       x = "Number of Prior Exposures",
+       y = "Immunity Effect") +
+  theme_minimal()
+```
+
+We can integrate the immunity vector over the distribution of exposure to get a weighted effect of immunity by gravidity for a given ANC primigravid prevalence using the function get_weight_impact_df.
+```{r show how to generate immunity gravidity, echo = TRUE}
+# Assuming primi_prev is given and selected_inf_history is loaded
+imm_vect <- hill_func(0:20, shape = 2, scale = 3)
+ get_weight_impact_df(
+  inf_history = selected_inf_history,
+  primi_prev = 0.1,
+  imm_vect = imm_vect
+)
+
+  get_weight_impact_df(
+  inf_history = selected_inf_history,
+  primi_prev = 0.5,
+  imm_vect = imm_vect
+)
+
+```
+
+
+## Generating a test dataset
+The function 'generate_synthetic_data' allows us to generate synthetic data which captures the impact of malaria throughout pregnancy in non-immune women and the immune effects as modelled above. It also captures shifts in haemoglobin dynamics that occur naturally by gravidity and through gestation in non-infected women.
+
+```{r plot synthetic data, echo = TRUE,fig.width=7}
+synthetic_data<-generate_synthetic_data(site_inf_history=selected_inf_history)
+
+## returns a data frame of the individual level data and the malaria impact spline and effects of pregnancy-specific immmunity used within the simulation 
+names(synthetic_data)
+
+# Display the first few rows of the synthetic data
+knitr::kable(head(synthetic_data$synthetic_data_df))
+
+### plot the dataset
+ggplot(synthetic_data$synthetic_data_df)+
+geom_point( aes(x = gestage, y = hb_level, color = factor(malaria)), alpha = 0.05) +
+  stat_smooth(data = synthetic_data$synthetic_data_df, aes(x = gestage, y = hb_level, color = factor(malaria)), method = "loess", se = FALSE, linetype = "dotted", size = 2) +
+  labs(title = "HB Mean vs. Gestational Age by Gravidity and Malaria Status",
+       x = "Gestational Age",
+       y = "HB Mean",
+       color = "Malaria Status") +
+  facet_wrap(~ gravidity) +
+  theme_minimal()
+``` 
+
+```{r plot malspline, echo = TRUE,fig.width=5}
+# Plot malaria-attributable reduction in HB over gestational age in non-immune
+ggplot(synthetic_data$simmed_mal_spline)+
+  geom_line(aes(x = gestage, y = mal_effect), linewidth = 3,color = "#6B5072") +
+  ylab("Malaria attributable reduction in HB (g/dL)") +
+  theme_minimal()
+``` 
+
+```{r plot immune effects, echo = TRUE,fig.width=5}
+### plot how this varies by gravidity
+ggplot(synthetic_data$simmed_mal_immunity) +
+  geom_line(aes(x = gravidity, y = mal_effect), linewidth = 3,color = "#D08C60") +
+  ylab("Malaria attributable reduction in HB (g/dL)") +
+  theme_minimal()
+
+```

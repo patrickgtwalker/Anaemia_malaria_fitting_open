@@ -1,9 +1,8 @@
 # Function to process MCMC output and generate data frames for plotting
-summarise_model <- function(mcmc, n_samples=100,gestage_min=80,gestage_max=200) {
+summarise_model <- function(mcmc, site_inf_history, n_samples=100,gestage_min=80,gestage_max=200) {
   
   # Determine the total number of samples available
   max_list <- (mcmc$parameters$samples * mcmc$parameters$chains)
-  
   # Randomly sample n_samples from the total number of samples
   n_list <- sample(1:max_list, n_samples, replace = FALSE) 
   
@@ -74,7 +73,7 @@ summarise_model <- function(mcmc, n_samples=100,gestage_min=80,gestage_max=200) 
     imm_vect <- hill_func(0:20, shape = shape_hill_out$shape[j], scale = scale_hill_out$scale[j])
     
     # Calculate gravidity impact based on the first gravidity's malaria prevalence
-    grav_impact_df <- get_weight_impact_df(inf_history = list_inf_histories[[1]],
+    grav_impact_df <- get_weight_impact_df(inf_history = site_inf_history,
                                            primi_prev = plogis(log_odds_malaria_prevalence_G1_out$log_odds_malaria_prevalence_G1[j]),
                                            imm_vect = imm_vect)
     
@@ -139,34 +138,33 @@ summarise_model <- function(mcmc, n_samples=100,gestage_min=80,gestage_max=200) 
 }
 
 
-generate_combined_plot <- function(model, fitted_data,true_data, n_samples=100,gestage_min=80,gestage_max=200){
+generate_combined_plot <- function(model, fitted_data,true_data,site_inf_history, n_samples=1000,gestage_min=80,gestage_max=200){
 
 # Fit the non-censored data
-fit_summary <- summarise_model(model, n_samples)
-print("here")
+fit_summary <- summarise_model(mcmc=model,site_inf_history=site_inf_history, n_samples=n_samples)
 # First plot: HB Mean vs. Gestational Age by Gravidity and Malaria Status
 plot1_noncensored <- ggplot(fit_summary$HB_mean_df) +
   geom_point(data = fitted_data, aes(x = gestage, y = hb_level, color = factor(malaria)), alpha = 0.05) +
   geom_line(aes(x = gestage, y = HB_mean, group = interaction(malaria, draw), color = factor(malaria)), alpha = 0.01) +
-  stat_smooth(data = true_data$synthetic_data_df, aes(x = gestage, y = hb_level, color = factor(malaria)), method = "loess", se = FALSE, linetype = "dotted", size = 2) +
+  stat_smooth(data = true_data$data_df, aes(x = gestage, y = hb_level, color = factor(malaria)), method = "loess", se = FALSE, linetype = "dotted", size = 2) +
   labs(title = "HB Mean vs. Gestational Age by Gravidity and Malaria Status",
        x = "Gestational Age",
        y = "HB Mean",
        color = "Malaria Status") +
   facet_wrap(~ gravidity) +
   theme_minimal()
-print("here2")
+
 # Second plot: Malaria attributable reduction in HB over gestational age
 plot2_noncensored <- ggplot(fit_summary$mal_splines_df) +
-  geom_line(aes(x = gestage, y = mal_effect, group = draw), alpha = 0.1) +
-  geom_line(data = true_data$simmed_mal_spline, aes(x = gestage, y = mal_effect), linewidth = 3) +
+  geom_line(aes(x = gestage, y = mal_effect, group = draw), alpha = 0.05,color = "#6B5072") +
+  geom_line(data = true_data$simmed_mal_spline, aes(x = gestage, y = mal_effect), size = 3,color = "#6B5072") +
   ylab("Malaria attributable reduction in HB (g/dL)") +
   theme_minimal()
 
 # Third plot: Malaria attributable reduction in HB over gravidity
 plot3_noncensored <- ggplot(fit_summary$mal_immunity_df) +
-  geom_line(aes    (x = gravidity, y = mal_effect, group = draw), alpha = 0.1) +
-  geom_line(data = true_data$simmed_mal_immunity, aes(x = gravidity, y = mal_effect), linewidth = 3) +
+  geom_line(aes    (x = gravidity, y = mal_effect, group = draw), alpha = 0.05,color = "#D08C60") +
+  geom_line(data = true_data$simmed_mal_immunity, aes(x = gravidity, y = mal_effect), size = 3,color = "#D08C60") +
   ylab("Malaria attributable reduction in HB (g/dL)") +
   theme_minimal()
 
