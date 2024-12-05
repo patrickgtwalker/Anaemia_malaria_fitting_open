@@ -88,7 +88,7 @@ run_noncensored_data <- run_mcmc(
   logprior = r_logprior_noncensor,
   burnin = 1000,
   samples = 5000,
-  pb_markdown = FALSE,
+  #pb_markdown = FALSE,
   chains = 1
 )
 
@@ -143,7 +143,7 @@ run_censored_data_incorrect <- run_mcmc(
   logprior = r_logprior_noncensor,
   burnin = 1000,
   samples = 10000,
-  pb_markdown = FALSE,
+  #pb_markdown = FALSE,
   chains = 1
 )
 
@@ -212,9 +212,9 @@ run_censored_data_correct <- run_mcmc(
   ),
   loglike = r_loglike_w_censoring,
   logprior = r_logprior_censor,
-  burnin = 200,
-  samples = 1000,
-  pb_markdown = FALSE,
+  burnin = 2000,
+  samples = 5000,
+  #pb_markdown = FALSE,
   chains = 1
 )
 ```
