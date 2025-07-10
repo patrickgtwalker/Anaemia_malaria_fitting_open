@@ -60,20 +60,20 @@ So for infected secundigravidae we'd expect around 25% to have been exposed to m
 At first glance this may seem unintuitively high given prevalence was 10% at first ANC in their previous pregnancy. In part this is because the model capture cumulative prevalence from 12 weeks gestation (when the placenta is considered sufficiently viable to lead to substantial sequestration) to delivery but is largely due to heterongeneity in exposure within the community - women who are infected last pregnancy are more likely than average to be infected this one. 
 
 To model how prior exposure mitigates the malaria-associated impact on hemoglobin, we use a sigmoidal function, which is commonly used in biological contexts to describe saturation effects.
-```{r hill_func, echo = TRUE,fig.width=5}
+```{r Sigmoid_func, echo = TRUE,fig.width=5}
 
-# Example usage of the Hill function
+# Example usage of the sigmoidal function
 shape <- 2
 scale <- 1
-immunity_vector <- hill_func(0:20, shape, scale)
+immunity_vector <- Sigmoid_func(0:20, shape, scale)
 
 
 
-# Plot the Hill function
+# Plot the sigmoidal function
 library(ggplot2)
 ggplot(data.frame(i = 0:20, immunity = immunity_vector), aes(x = i, y = immunity)) +
   geom_line() +
-  labs(title = "Immunity Vector Modeled by Hill Function",
+  labs(title = "Immunity Vector Modeled by Sigmoidal Function",
        x = "Number of Prior Exposures",
        y = "Immunity Effect") +
   theme_minimal()
@@ -82,7 +82,7 @@ ggplot(data.frame(i = 0:20, immunity = immunity_vector), aes(x = i, y = immunity
 We can integrate the immunity vector over the distribution of exposure to get a weighted effect of immunity by gravidity for a given ANC primigravid prevalence using the function get_weight_impact_df.
 ```{r show how to generate immunity gravidity, echo = TRUE}
 # Assuming primi_prev is given and selected_inf_history is loaded
-imm_vect <- hill_func(0:20, shape = 2, scale = 3)
+imm_vect <- Sigmoid_func(0:20, shape = 2, scale = 3)
  get_weight_impact_df(
   inf_history = selected_inf_history,
   primi_prev = 0.1,

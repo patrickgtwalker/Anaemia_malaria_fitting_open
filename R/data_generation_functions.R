@@ -4,8 +4,8 @@ get_dist_grav <- function(RRs) {
   denom <- sum(numerator)
   return(numerator / denom)
 }
-# Function to compute immunity vector using the Hill function
-hill_func <- function(i, shape, scale) {
+# Function to compute immunity vector using the sigmoidal function
+Sigmoid_func <- function(i, shape, scale) {
   return(1 / (1 + (i / scale)^shape))
 }
 
@@ -44,8 +44,8 @@ generate_synthetic_data <- function(
   y_spline <- cubic_spline(x = seq(gestage_min, gestage_max, length.out = 3), y = y_knots, x_pred = seq(gestage_min, gestage_max, length.out = (gestage_max - gestage_min) + 1))
   mal_spline <- cubic_spline(x = seq(gestage_min, gestage_max, length.out = 3), y = mal_knots, x_pred = seq(gestage_min, gestage_max, length.out = (gestage_max - gestage_min) + 1))
   
-  # Generate immunity vector based on the Hill function
-  imm_vect <- hill_func(0:20, hill_shape, hill_scale)
+  # Generate immunity vector based on the sigmoidal function
+  imm_vect <- Sigmoid_func(0:20, hill_shape, hill_scale)
   
   # Calculate the immunity effects for each gravidity category
   imm_effects <- get_weight_impact_df(site_inf_history, Primigravid_prevalence, imm_vect)

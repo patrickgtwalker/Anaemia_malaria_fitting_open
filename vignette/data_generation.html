@@ -520,18 +520,18 @@ infected this one.</p>
 on hemoglobin, we use a sigmoidal function, which is commonly used in
 biological contexts to describe saturation effects.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co"># Example usage of the Hill function</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co"># Example usage of the sigmoidal function</span></span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>shape <span class="ot">&lt;-</span> <span class="dv">2</span></span>
 <span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>scale <span class="ot">&lt;-</span> <span class="dv">1</span></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>immunity_vector <span class="ot">&lt;-</span> <span class="fu">hill_func</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">20</span>, shape, scale)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>immunity_vector <span class="ot">&lt;-</span> <span class="fu">Sigmoid_func</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">20</span>, shape, scale)</span>
 <span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
 <span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a></span>
 <span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a></span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co"># Plot the Hill function</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co"># Plot the sigmoidal function</span></span>
 <span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
 <span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">data.frame</span>(<span class="at">i =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">20</span>, <span class="at">immunity =</span> immunity_vector), <span class="fu">aes</span>(<span class="at">x =</span> i, <span class="at">y =</span> immunity)) <span class="sc">+</span></span>
 <span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Immunity Vector Modeled by Hill Function&quot;</span>,</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Immunity Vector Modeled by Sigmoidal Function&quot;</span>,</span>
 <span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">&quot;Number of Prior Exposures&quot;</span>,</span>
 <span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">&quot;Immunity Effect&quot;</span>) <span class="sc">+</span></span>
 <span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code></pre></div>
@@ -540,7 +540,7 @@ biological contexts to describe saturation effects.</p>
 exposure to get a weighted effect of immunity by gravidity for a given
 ANC primigravid prevalence using the function get_weight_impact_df.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Assuming primi_prev is given and selected_inf_history is loaded</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>imm_vect <span class="ot">&lt;-</span> <span class="fu">hill_func</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">20</span>, <span class="at">shape =</span> <span class="dv">2</span>, <span class="at">scale =</span> <span class="dv">3</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>imm_vect <span class="ot">&lt;-</span> <span class="fu">Sigmoid_func</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">20</span>, <span class="at">shape =</span> <span class="dv">2</span>, <span class="at">scale =</span> <span class="dv">3</span>)</span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a> <span class="fu">get_weight_impact_df</span>(</span>
 <span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">inf_history =</span> selected_inf_history,</span>
 <span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="at">primi_prev =</span> <span class="fl">0.1</span>,</span>

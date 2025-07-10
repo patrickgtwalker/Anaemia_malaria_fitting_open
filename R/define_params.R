@@ -2,8 +2,8 @@
 max_GG <- 6
 df_params <- define_params(
   name = "HB_sigma", min = 0.1, max = 10,
-  name = "shape_hill", min = 0.01, max = 10,  # Gravidity effect Hill function
-  name = "scale_hill", min = 0.01, max = 10   # Gravidity effect Hill function
+  name = "shape_hill", min = 0.01, max = 10,  # Gravidity effect sigmoidal function
+  name = "scale_hill", min = 0.01, max = 10   # Gravidity effect sigmoidal function
 )
 
 # Define knot parameters for y_spline and mal_spline

@@ -10,8 +10,8 @@ generate_df_params_non_censor <- function(
 ) {
   df_params <- define_params(
     name = "HB_sigma", min = HB_sigma_range[1], max = HB_sigma_range[2],
-    name = "shape_hill", min = hill_shape_range[1], max = hill_shape_range[2],  # Gravidity effect Hill function
-    name = "scale_hill", min = hill_scale_range[1], max = hill_scale_range[2]   # Gravidity effect Hill function
+    name = "shape_hill", min = hill_shape_range[1], max = hill_shape_range[2],  # Gravidity effect sigmoidal function
+    name = "scale_hill", min = hill_scale_range[1], max = hill_scale_range[2]   # Gravidity effect sigmoidal function
   )
   
   # Define knot parameters for y_spline and mal_spline
@@ -43,8 +43,8 @@ generate_df_params_censor <- function(
 ) {
   df_params <- define_params(
     name = "HB_sigma", min = HB_sigma_range[1], max = HB_sigma_range[2],
-    name = "shape_hill", min = hill_shape_range[1], max = hill_shape_range[2],  # Gravidity effect Hill function
-    name = "scale_hill", min = hill_scale_range[1], max = hill_scale_range[2]   # Gravidity effect Hill function
+    name = "shape_hill", min = hill_shape_range[1], max = hill_shape_range[2],  # Gravidity effect sigmoidal function
+    name = "scale_hill", min = hill_scale_range[1], max = hill_scale_range[2]   # Gravidity effect sigmoidal function
   )
   
   # Define knot parameters for y_spline and mal_spline
