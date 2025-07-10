@@ -92,7 +92,8 @@ generate_synthetic_data <- function(
     list(
       data_df=synthetic_data_df,
       simmed_mal_spline=simmed_mal_spline,
-      simmed_mal_immunity=simmed_mal_immunity
+      simmed_mal_immunity=simmed_mal_immunity,
+      grav_cats=grav_cats
          )
   )
 }
@@ -118,7 +119,7 @@ generate_country_data_list_censor <- function(data_df, cutoff = 7) {
   # Provide data on the number of women censored
   censored_number <- as.numeric(data_df %>% filter(hb_level <= cutoff) %>% summarise(n()))
   uncensored_number <- nrow(data_df_censor)
-  censored_data <- list(
+  censored_data <- data.frame(
     censored_number = censored_number,
     total_number = censored_number + uncensored_number
   )

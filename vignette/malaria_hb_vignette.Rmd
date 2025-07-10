@@ -4,7 +4,7 @@ author: "Patrick Walker & Sequoia Leuba"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Inferring Malaria Impact on Haemoglobin}
+  %\VignetteIndexEntry{Inferring Malaria Impact on Hemoglobin from Datasets, Including Those Where Women with Anaemia Are Excluded at Enrollment}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -17,7 +17,6 @@ knitr::opts_chunk$set(
 
 # Load necessary libraries and functions using `here`
 library(here)
-grav_cats <- 6
 source(here("R", "load_libraries.R"))
 source(here("R", "cubic_spline.R"))
 source(here("R", "immune_functions.R"))
@@ -34,6 +33,7 @@ selected_inf_history <- list_inf_histories$site_inf_history[[1]]
 
 # Generate synthetic data based on the selected infection history
 synthetic_data_df <- generate_synthetic_data(site_inf_history = selected_inf_history)
+print(min(synthetic_data_df$data_df$hb_level))
 
 ```
 This vignette applies the models developed in [Reference to Paper] to simulated data. We begin by validating our inferential framework for modelling the impact of malaria on haemoglobin levels during pregnancy, including the effect of acquired immunity over successive pregnancies. We then demonstrate the biases introduced by excluding women diagnosed with severe anaemia at enrolment and validate our approach for adjusting the framework to account for these biases, enabling us to correctly capture underlying trends.
@@ -41,11 +41,11 @@ This vignette applies the models developed in [Reference to Paper] to simulated 
 # Inferring Patterns from Uncensored Data 
 
 ## Preparing Our Data 
-Our study involved data on the HB concentrations at enrollment into a trial, infection status by PCR, gestational age at enrollment and gravidity. We also use ANC prevalence in primigravidae as a marker to determine our model-based estimates of patterns of prior exposure during pregnancy. The function generate_country_data_list_censor creates a list that involves both the data (here the synthetic data from data_generation.Rmd) and pre-calculated aggregated number of PCR samples and PCR positives in primigravidae within the dataset (to reduce computational time)
+Our study involved data from pregnant women enrolled into a number of trials evaluating interventions to combat malaria in pregnancy. This comprised the following variables at first ANC visit: HB concentrations, infection status by PCR, gestational age and gravidity. We also use ANC prevalence in primigravidae as a marker to determine our model-based estimates of patterns of prior exposure during pregnancy. The function generate_country_data_list_censor creates a list that involves both the data (here the synthetic data from data_generation.Rmd) and pre-calculated aggregated number of PCR samples and PCR positives in primigravidae within the dataset (to reduce computational time)
 
 ```{r generate synthetic data}
 # Generate the uncensored data list
-uncensored_data_list <- generate_country_data_list_censor(data_df = synthetic_data_df$data_df)
+uncensored_data_list <- generate_country_data_list_noncensor(data_df = synthetic_data_df$data_df)
 
 # Display the first few rows of the data
 knitr::kable(head(uncensored_data_list$country_df))
@@ -54,7 +54,6 @@ knitr::kable((uncensored_data_list$prev_data))
 ```
 
 ## Defining Parameters
-Defining Parameters
 Our approach uses the drjacoby package which requires specific templates for parameters. Here we use the function 'generate_df_params_non_censor' to set up a template of parameters required for this package. These parameters include:
 
 + Natural dynamics by gestational age (y_knots) and by gravidity (Gx_non_infect)
@@ -72,7 +71,6 @@ knitr::kable(df_params_non_censor)
 ## Running the Model on Uncensored Data
 With the data prepared and parameters defined, we now run our model on the uncensored dataset. This will help us validate our model's ability to capture the true underlying patterns without any biases introduced by data censorship.
 
-
 ```{r run_model}
 run_noncensored_data <- run_mcmc(
   data = uncensored_data_list,
@@ -80,25 +78,20 @@ run_noncensored_data <- run_mcmc(
   misc = list(
     gestage_min = 80,
     gestage_max = 200,
-    grav_cats = grav_cats,
     cutoff = NULL,
     inf_history = selected_inf_history
   ),
   loglike = r_loglike,
   logprior = r_logprior_noncensor,
-  burnin = 1000,
-  samples = 5000,
-  #pb_markdown = FALSE,
+ burnin = 1000,
+  samples = 10000,
   chains = 1
 )
 
 ```
-
-```{r read model , echo = FALSE, eval = FALSE}
-run_noncensored_data<-readRDS(here::here("inst", "extdata", "run_noncensored_data.rds"))
-```
 ## Visualising the Results 
 After running the model, we can visualise the results to compare the model's predictions with the true synthetic data. This helps us ensure that the model correctly infers the impact of malaria on haemoglobin levels.
+
 ```{r generate plot noncensor model}
 # Generate combined plot for non-censored data
 combined_noncensored_plot <- generate_combined_plot(
@@ -109,15 +102,18 @@ combined_noncensored_plot <- generate_combined_plot(
 )
 
 ```
-In the left-hand plot dots show datapoints, the dashed lines show true underlying mean Hb by gestation and gravidity and thin equivalent lines show draws from the joint posterior for these means. On the right-hand plots thick orange lines show the simulated values and thin purple lines equivalent posterior draws.     
+In the left-hand plot dots show datapoints, the dashed lines show true underlying mean Hb by gestation and gravidity and thin equivalent lines show draws from the joint posterior for these means. On the right-hand plots thick orange lines show the simulated values and thin purple lines equivalent posterior draws. 
+
+Here we have run the mcmc for a much shorter duration than would be required for a final version but even in this shorter run we can the inferred and simulated relationships look reassuringly aligned.
 
 ```{r  plot noncensor model,fig.width=10,fig.height=8}
 # Display the combined plot
 combined_noncensored_plot
 ```
+
 # Introducing Bias: Inferring Patterns from Censored Data
 
-In some of the studies used in the analysis, women with severe anaemia (HB < 7) are excluded from enrolment, introducing biases. Here, we simulate this scenario by censoring our synthetic data and then running the model without adjusting for this bias.
+In some of the studies used in the analysis, women with severe anaemia (HB < 7) are excluded from enrolment, introducing biases. Here, we demonstrate the issue by simulating this scenario by censoring our synthetic data and then running the model without adjusting for this bias.
 ```{r  censor data}
 # Censor women with HB < 7
 cutoff <- 7
@@ -143,12 +139,12 @@ run_censored_data_incorrect <- run_mcmc(
   logprior = r_logprior_noncensor,
   burnin = 1000,
   samples = 10000,
-  #pb_markdown = FALSE,
   chains = 1
 )
 
 ```
-#Visualising the Bias in the Results
+
+## Visualising the Bias in the Results
 We now visualise the results to see the impact of not adjusting for the bias introduced by excluding women with severe anaemia. The true impact of malaria upon haemoglobin is substantially under-estimated. 
 ```{r generate plot censored with unadjusted model}
 # Generate combined plot for censored data without adjustment
@@ -163,9 +159,10 @@ combined_incorrect_censored_plot <- generate_combined_plot(
 # Display the combined plot
 combined_incorrect_censored_plot
 ```
-##Correcting for Bias: Inferring Patterns from Censored Data with Adjustment
 
-## preparing the inference
+# Correcting for Bias: Inferring Patterns from Censored Data with Adjustment
+
+## Preparing the inference
 To account for the bias introduced by censoring, we adjust our model and re-run the analysis. Our approach assumes we know the number of individuals censored due to being anaemic at enrolment but not their gravidity distribution, nor their infection status. As a result, we have to make joint inference on the underlying true prevalence within each gravidity category, the true distribution of gravidity within our sample and the true underlying distribution of gestational age at enrollment. This requires we develop a new parameter file to reflect this.
 
 ```{r  generate define params censored  list}
@@ -212,13 +209,12 @@ run_censored_data_correct <- run_mcmc(
   ),
   loglike = r_loglike_w_censoring,
   logprior = r_logprior_censor,
-  burnin = 2000,
-  samples = 5000,
-  #pb_markdown = FALSE,
+  burnin = 1000,
+  samples = 10000,
   chains = 1
 )
 ```
-# Visualising the Corrected Results
+## Visualising the Corrected Results
 Finally, we visualise the results from the corrected model to confirm that it accurately captures the true underlying patterns, even when women with severe anaemia are excluded.
 ```{r generate plot censored with correctly adjusted model}
 # Generate combined plot for censored data with adjustment

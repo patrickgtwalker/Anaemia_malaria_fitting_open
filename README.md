@@ -38,7 +38,7 @@ Rendered HTML versions (`*.html`) are provided in the `vignette/` directory for 
 
 ## Example data
 
-Pre-computed example outputs and infection history data used by the vignettes are stored in `inst/extdata/` and loaded via `readRDS` within the R Markdown files.
+Pre-computed example outputs and model-based infection history estimates used by the vignettes are stored in `inst/extdata/` and loaded via `readRDS` within the R Markdown files.
 
 ## License
 

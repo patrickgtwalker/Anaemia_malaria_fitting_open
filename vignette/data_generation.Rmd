@@ -57,9 +57,9 @@ primi_prev<-0.1
 ```
 
 So for infected secundigravidae we'd expect around 25% to have been exposed to malaria in their first pregnancy. 
-At first glance this may seem unintuitively high given prevalence was 10% at first ANC in their previous pregnancy. In part this is because the model capture cumulative prevalence from 12 weeks gestation (when the placenta is considered sufficiently viable to lead to substantial sequestration) to delivery but is largely due to heterongeneity in exposure within the community - women who are infected this pregnancy are more likely than average to be infected this one. 
+At first glance this may seem unintuitively high given prevalence was 10% at first ANC in their previous pregnancy. In part this is because the model capture cumulative prevalence from 12 weeks gestation (when the placenta is considered sufficiently viable to lead to substantial sequestration) to delivery but is largely due to heterongeneity in exposure within the community - women who are infected last pregnancy are more likely than average to be infected this one. 
 
-To model how prior exposure mitigates the malaria-associated impact on hemoglobin, we use the Hill function, which is commonly used in biological contexts to describe saturation effects.
+To model how prior exposure mitigates the malaria-associated impact on hemoglobin, we use a sigmoidal function, which is commonly used in biological contexts to describe saturation effects.
 ```{r hill_func, echo = TRUE,fig.width=5}
 
 # Example usage of the Hill function
@@ -107,13 +107,14 @@ synthetic_data<-generate_synthetic_data(site_inf_history=selected_inf_history)
 ## returns a data frame of the individual level data and the malaria impact spline and effects of pregnancy-specific immmunity used within the simulation 
 names(synthetic_data)
 
+
 # Display the first few rows of the synthetic data
-knitr::kable(head(synthetic_data$synthetic_data_df))
+knitr::kable(head(synthetic_data$data_df))
 
 ### plot the dataset
-ggplot(synthetic_data$synthetic_data_df)+
+ggplot(synthetic_data$data_df)+
 geom_point( aes(x = gestage, y = hb_level, color = factor(malaria)), alpha = 0.05) +
-  stat_smooth(data = synthetic_data$synthetic_data_df, aes(x = gestage, y = hb_level, color = factor(malaria)), method = "loess", se = FALSE, linetype = "dotted", size = 2) +
+  stat_smooth(data = synthetic_data$data_df, aes(x = gestage, y = hb_level, color = factor(malaria)), method = "loess", se = FALSE, linetype = "dotted", size = 2) +
   labs(title = "HB Mean vs. Gestational Age by Gravidity and Malaria Status",
        x = "Gestational Age",
        y = "HB Mean",
