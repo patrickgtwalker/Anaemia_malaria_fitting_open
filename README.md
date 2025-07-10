@@ -35,6 +35,10 @@ rmarkdown::render("vignette/malaria_hb_vignette.Rmd")
 ```
 
 Rendered HTML versions (`*.html`) are provided in the `vignette/` directory for quick browsing.
+They are also available online via GitHub Pages:
+
+- [data_generation.html](https://patrickgtwalker.github.io/Anaemia_malaria_fitting_open/vignette/data_generation.html)
+- [malaria_hb_vignette.html](https://patrickgtwalker.github.io/Anaemia_malaria_fitting_open/vignette/malaria_hb_vignette.html)
 
 ## Example data
 
