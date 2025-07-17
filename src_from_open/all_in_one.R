@@ -58,8 +58,8 @@ cubic_spline <- function(x, y, x_pred) {
 
 
 "immune functions.R"
-# Function to describe the decline in malaria effect using the Hill function
-hill_func <- function(i, shape, scale) {
+# Function to describe the decline in malaria effect using the sigmoidal function
+Sigmoid_func <- function(i, shape, scale) {
   return(1 / (1 + (i/scale)^shape))
 }
 
@@ -232,17 +232,17 @@ mal_spline <- cubic_spline(x = seq(gestage_min,gestage_max,l=3), y = mal_knots, 
 simmed_mal_spline<-data.frame(gestage=seq(gestage_min,gestage_max,l=((gestage_max-gestage_min)+1)),
                               mal_effect=-mal_spline)
 
-# Hill function parameters for immunity vector
+# sigmoidal function parameters for immunity vector
 hill_shape <-1
 hill_scale <- 3
 
-# Function to compute immunity vector using the Hill function
-hill_func <- function(i, shape, scale) {
+# Function to compute immunity vector using the sigmoidal function
+Sigmoid_func <- function(i, shape, scale) {
   return(1 / (1 + (i / scale)^shape))
 }
 
 # Immunity vector based on gravidity categories
-imm_vect <- hill_func(0:20, hill_shape, hill_scale)
+imm_vect <- Sigmoid_func(0:20, hill_shape, hill_scale)
 imm_effects<-get_weight_impact_df(site_inf_histories$site_inf_history[[1]],Primigravid_prevalence,imm_vect)
 
 simmed_mal_immunity=data.frame(gravidity=1:6,
@@ -444,7 +444,7 @@ r_loglike_w_censoring <- function(params, data, misc) {
   y_spline <- cubic_spline(x = seq(min,max,l=3), y = y_knots, x_pred = seq(min,max,l=((max-min)+1)))
   mal_spline <- cubic_spline(x = seq(min,max,l=3), y = mal_knots, x_pred = seq(min,max,l=((max-min)+1)))
   
-  imm_vect<-hill_func(0:20,shape_hill,scale_hill)
+  imm_vect<-Sigmoid_func(0:20,shape_hill,scale_hill)
   grav_impact_df <- get_weight_impact_df(inf_history = misc$list_inf_histories[[country]], #*`changed here`
                                          primi_prev = malaria_prevalence[1],  #*`changed here`
                                          imm_vect)
@@ -497,7 +497,7 @@ r_loglike <- function(params, data, misc) {
   y_spline <- cubic_spline(x = seq(min,max,l=3), y = y_knots, x_pred = seq(min,max,l=((max-min)+1)))
   mal_spline <- cubic_spline(x = seq(min,max,l=3), y = mal_knots, x_pred = seq(min,max,l=((max-min)+1)))
   
-  imm_vect<-hill_func(0:20,shape_hill,scale_hill)
+  imm_vect<-Sigmoid_func(0:20,shape_hill,scale_hill)
   grav_impact_df <- get_weight_impact_df(inf_history = misc$list_inf_histories[[country]], #*`changed here`
                                          primi_prev = PG_prev,  #*`changed here`
                                          imm_vect)

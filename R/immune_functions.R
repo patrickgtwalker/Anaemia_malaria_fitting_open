@@ -1,6 +1,6 @@
-# Function to describe the decline in malaria effect using the Hill function
-hill_func <- function(i, shape, scale) {
-  # Hill function, used to model how the effect of malaria declines with immunity
+# Function to describe the decline in malaria effect using the sigmoidal function
+Sigmoid_func <- function(i, shape, scale) {
+  # sigmoidal function, used to model how the effect of malaria declines with immunity
   return(1 / (1 + (i/scale)^shape))
 }
 

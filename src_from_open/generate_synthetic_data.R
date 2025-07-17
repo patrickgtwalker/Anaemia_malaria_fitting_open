@@ -62,17 +62,17 @@ simmed_mal_spline <- data.frame(
   mal_effect = -mal_spline  # Negate the malaria effect
 )
 
-# Hill function parameters for immunity vector
+# sigmoidal function parameters for immunity vector
 hill_shape <- 1
 hill_scale <- 3
 
-# Function to compute immunity vector using the Hill function
-hill_func <- function(i, shape, scale) {
+# Function to compute immunity vector using the sigmoidal function
+Sigmoid_func <- function(i, shape, scale) {
   return(1 / (1 + (i / scale)^shape))
 }
 
 # Generate immunity vector based on gravidity categories
-imm_vect <- hill_func(0:20, hill_shape, hill_scale)
+imm_vect <- Sigmoid_func(0:20, hill_shape, hill_scale)
 imm_effects <- get_weight_impact_df(site_inf_histories$site_inf_history[[1]], Primigravid_prevalence, imm_vect)
 
 # Create a data frame for the simulated malaria immunity

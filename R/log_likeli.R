@@ -83,8 +83,8 @@ r_loglike_w_censoring <- function(params, data, misc) {
   y_spline <- cubic_spline(x = seq(min, max, length.out = 3), y = y_knots, x_pred = seq(min, max, length.out = (max - min) + 1))
   mal_spline <- cubic_spline(x = seq(min, max, length.out = 3), y = mal_knots, x_pred = seq(min, max, length.out = (max - min) + 1))
   
-  # Calculate the immunity vector using the Hill function
-  imm_vect <- hill_func(0:20, shape_hill, scale_hill)
+  # Calculate the immunity vector using the sigmoidal function
+  imm_vect <- Sigmoid_func(0:20, shape_hill, scale_hill)
   
   # Calculate the impact of gravidity on malaria effect
   grav_impact_df <- get_weight_impact_df(inf_history = misc$inf_history, primi_prev = malaria_prevalence[1], imm_vect)
@@ -126,8 +126,8 @@ r_loglike <- function(params, data, misc) {
   y_spline <- cubic_spline(x = seq(min, max, length.out = 3), y = y_knots, x_pred = seq(min, max, length.out = (max - min) + 1))
   mal_spline <- cubic_spline(x = seq(min, max, length.out = 3), y = mal_knots, x_pred = seq(min, max, length.out = (max - min) + 1))
   
-  # Calculate the immunity vector using the Hill function
-  imm_vect <- hill_func(0:20, shape_hill, scale_hill)
+  # Calculate the immunity vector using the sigmoidal function
+  imm_vect <- Sigmoid_func(0:20, shape_hill, scale_hill)
   
   # Calculate the impact of gravidity on malaria effect
   grav_impact_df <- get_weight_impact_df(inf_history = misc$inf_history, primi_prev = PG_prev, imm_vect)

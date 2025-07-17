@@ -51,13 +51,13 @@ summarise_model <- function(mcmc, n_samples=100,gestage_min=80,gestage_max=200) 
     select(sprintf("mal_knot_2")) %>%
     as.data.frame()
   
-  # Extract the Hill function scale parameter
+  # Extract the sigmoidal function scale parameter
   scale_hill_out <- output %>%
     filter(phase == "sampling") %>%
     select(sprintf("scale_hill")) %>%
     as.data.frame()
   
-  # Extract the Hill function shape parameter
+  # Extract the sigmoidal function shape parameter
   shape_hill_out <- output %>%
     filter(phase == "sampling") %>%
     select(sprintf("shape_hill")) %>%
@@ -70,8 +70,8 @@ summarise_model <- function(mcmc, n_samples=100,gestage_min=80,gestage_max=200) 
   
   # Loop over the draws in n_list
   for (j in n_list) {
-    # Generate the immunity vector using the Hill function
-    imm_vect <- hill_func(0:20, shape = shape_hill_out$shape[j], scale = scale_hill_out$scale[j])
+    # Generate the immunity vector using the sigmoidal function
+    imm_vect <- Sigmoid_func(0:20, shape = shape_hill_out$shape[j], scale = scale_hill_out$scale[j])
     
     # Calculate gravidity impact based on the first gravidity's malaria prevalence
     grav_impact_df <- get_weight_impact_df(inf_history = list_inf_histories[[1]],
